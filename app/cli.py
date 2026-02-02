@@ -30,37 +30,81 @@ def initialize():
 
 @cli.command()
 def add_task(username:str, task:str):
-    # Task 4.1 code here. Remove the line with "pass" below once completed
-    pass
-
+    with get_session() as db:
+        user = db.exec(select(User).where(User.username == username)).one_or_none()
+        if not user:
+            print("User doesn't exist")
+            return
+        user.todos.append(Todo(text=task))
+        db.add(user)
+        db.commit()
+        print("Task added for user")
+    
 @cli.command()
 def toggle_todo(todo_id:int, username:str):
-    # Task 4.2 code here. Remove the line with "pass" below once completed
-    pass
+    with get_session() as db:
+        todo = db.exec(select(Todo).where(Todo.id == todo_id)).one_or_none()
+        if not todo:
+            print("This todo doesn't exist")
+            return
+        if todo.user.username != username:
+            print(f"This todo doesn't belong to {username}")
+            return
+
+        todo.toggle()
+        db.add(todo)
+        db.commit()
+
+        print(f"Todo item's done state set to {todo.done}")
 
 @cli.command()
 def list_todo_categories(todo_id:int, username:str):
-    # Task 5.3 code here. Remove the line with "pass" below once completed
-    pass
+    with get_session() as db:
+        todo = db.exec(select(Todo).where(Todo.id == todo_id)).one_or_none()
+        if not todo:
+            print("Todo doesn't exist")
+        elif not todo.username == username:
+            print(f"Todo doesn't belong to {username}")
+        else:
+            print(f"Categories: {todo.categories}")
 
 @cli.command()
 def create_category(username:str, cat_text:str):        
-    # Task 5.4 code here. Remove the line with "pass" below once completed
-    pass
+    with get_session() as db:
+        user = db.exec(select(User).where(User.username == username)).one_or_none()
+        if not user:
+            print(f"{username} does not exist.")
+            return
+        
+        category = db.exec(select(Category).where(Category.text == cat_text, Category.user_id == user.id)).one_or_none()
+        if category:
+            print(f"{cat_text} already exists.")
+            return
+        
+        category = Category(user_id=user.id, text=cat_text)
+        db.add(category)
+        db.commit()
+        print(f"{cat_text} created.")
 
 @cli.command()
 def list_user_categories(username:str):
-    # Task 5.5 code here. Remove the line with "pass" below once completed
-    pass
+    with get_session() as db:
+        user = db.exec(select(User).where(User.username == username)).one_or_none()
+        if not user:
+            print("User does not exist.")
+            return
+            
+        categories = db.exec(select(Category).where(Category.user_id == user.id)).all()
+        print([category.text for category in categories])
 
 @cli.command()
 def assign_category_to_todo(username:str, todo_id:int, category_text:str):
     # Task 5.6 code here. Remove the line with "pass" below once completed
     pass
-11. Conclusion
-Thus concludes your introduction to flask-sqlalchemy. The usage of this library is at the very core of this course.
+# 11. Conclusion
+# Thus concludes your introduction to flask-sqlalchemy. The usage of this library is at the very core of this course.
 
-You can view a completed version of this lab at the following link
+# You can view a completed version of this lab at the following link
 
 if __name__ == "__main__":
     cli()
